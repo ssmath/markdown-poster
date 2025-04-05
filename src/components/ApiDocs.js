@@ -133,16 +133,6 @@ function ApiDocs({ onClose }) {
                 <td>string</td>
                 <td>显示模式，设置为 "image" 时直接显示海报图片而不是编辑界面</td>
               </tr>
-              <tr>
-                <td>download</td>
-                <td>boolean</td>
-                <td>设置为 "true" 时自动下载海报图片（仅当 mode=image 时有效）</td>
-              </tr>
-              <tr>
-                <td>output</td>
-                <td>string</td>
-                <td>设置为 "direct" 时生成纯图片视图，无界面元素</td>
-              </tr>
             </tbody>
           </Table>
         </Section>
@@ -157,15 +147,9 @@ https://your-domain.com/#/?md=BASE64_ENCODED_MARKDOWN&template=TEMPLATE_ID
 // 图片预览模式
 https://your-domain.com/#/?md=BASE64_ENCODED_MARKDOWN&template=TEMPLATE_ID&mode=image
 
-// 自动下载模式
-https://your-domain.com/#/?md=BASE64_ENCODED_MARKDOWN&template=TEMPLATE_ID&mode=image&download=true
-
-// 直接输出图片模式 (无界面元素)
-https://your-domain.com/#/?md=BASE64_ENCODED_MARKDOWN&template=TEMPLATE_ID&output=direct
-
 // 示例：使用 "dark" 模板显示 "# Hello World" 的 Markdown 内容
 // Base64 编码的 "# Hello World" 是 IyBIZWxsbyBXb3JsZA==
-https://your-domain.com/#/?md=IyBIZWxsbyBXb3JsZA==&template=dark&output=direct`}</CodeBlock>
+https://your-domain.com/#/?md=IyBIZWxsbyBXb3JsZA==&template=dark`}</CodeBlock>
         </Section>
         
         <Section>
@@ -185,13 +169,6 @@ https://your-domain.com/#/p/?md=IyBIZWxsbyBXb3JsZA==&template=dark`}</CodeBlock>
 
 // 示例：
 ![Markdown Poster](https://your-domain.com/#/image/abcd12345)`}</CodeBlock>
-          
-          <h4 style={{ marginTop: '15px', marginBottom: '10px' }}>3. 自动下载链接</h4>
-          <CodeBlock>{`// 访问此链接将自动下载图片
-https://your-domain.com/#/download/?md=BASE64_ENCODED_MARKDOWN&template=TEMPLATE_ID
-
-// 示例：
-https://your-domain.com/#/download/?md=IyBIZWxsbyBXb3JsZA==&template=dark`}</CodeBlock>
           
           <p style={{ marginTop: '15px', fontSize: '14px', color: '#666' }}>
             注意：所有链接在当前会话有效，页面刷新后需要重新生成。如需长期保存，请下载图片并上传至图床。
@@ -231,16 +208,8 @@ const editUrl = \`https://your-domain.com/#/?md=\${encodedMarkdown}&template=\${
 // 生成图片模式 URL
 const imageUrl = \`https://your-domain.com/#/?md=\${encodedMarkdown}&template=\${templateId}&mode=image\`;
 
-// 生成自动下载模式 URL
-const downloadUrl = \`https://your-domain.com/#/?md=\${encodedMarkdown}&template=\${templateId}&mode=image&download=true\`;
-
-// 生成直接图片输出模式 URL
-const directUrl = \`https://your-domain.com/#/?md=\${encodedMarkdown}&template=\${templateId}&output=direct\`;
-
 console.log("编辑链接:", editUrl);
-console.log("图片链接:", imageUrl);
-console.log("自动下载链接:", downloadUrl);
-console.log("直接图片链接:", directUrl);`}</CodeBlock>
+console.log("图片链接:", imageUrl);`}</CodeBlock>
         </Section>
         
         <Section>

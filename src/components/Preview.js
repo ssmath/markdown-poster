@@ -270,8 +270,6 @@ function Preview({ markdown, template, getShareableLink }) {
   const [showShareModal, setShowShareModal] = useState(false);
   const [sharableLink, setSharableLink] = useState('');
   const [copied, setCopied] = useState(false);
-  const [autoDownload, setAutoDownload] = useState(false);
-  const [directOutput, setDirectOutput] = useState(false);
   const [showImageUrl, setShowImageUrl] = useState(false);
 
   const handleDownload = async () => {
@@ -325,14 +323,9 @@ function Preview({ markdown, template, getShareableLink }) {
   };
 
   const handleShare = () => {
-    const link = getShareableLink(autoDownload, directOutput);
+    const link = getShareableLink();
     setSharableLink(link);
     setShowShareModal(true);
-    
-    // 如果选择了直接图片模式，重置图片URL，以便重新生成
-    if (directOutput) {
-      setImageUrl('');
-    }
   };
 
   const copyToClipboard = () => {
@@ -340,31 +333,6 @@ function Preview({ markdown, template, getShareableLink }) {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     });
-  };
-
-  const handleAutoDownloadChange = (e) => {
-    setAutoDownload(e.target.checked);
-    // 更新链接
-    if (showShareModal) {
-      const link = getShareableLink(e.target.checked, directOutput);
-      setSharableLink(link);
-    }
-  };
-  
-  const handleDirectOutputChange = (e) => {
-    setDirectOutput(e.target.checked);
-    // 如果选择了直接输出，自动下载选项无效
-    if (e.target.checked) {
-      setAutoDownload(false);
-      setShowImageUrl(true);
-    } else {
-      setShowImageUrl(false);
-    }
-    // 更新链接
-    if (showShareModal) {
-      const link = getShareableLink(e.target.checked ? false : autoDownload, e.target.checked);
-      setSharableLink(link);
-    }
   };
   
   const [imageUrl, setImageUrl] = useState('');
@@ -413,7 +381,7 @@ function Preview({ markdown, template, getShareableLink }) {
       
       // 生成直接下载URL
       const currentUrl = window.location.origin + window.location.pathname;
-      const shareableUrl = getShareableLink(false, false);
+      const shareableUrl = getShareableLink();
       const downloadUrl = `${currentUrl}#/download/?md=${shareableUrl.split('md=')[1]}`;
       
       // 生成海报页面URL
@@ -515,27 +483,6 @@ function Preview({ markdown, template, getShareableLink }) {
             </ShareModalHeader>
             
             <ShareOptions>
-              <CheckboxLabel>
-                <input 
-                  type="checkbox" 
-                  checked={directOutput}
-                  onChange={handleDirectOutputChange}
-                />
-                纯图片视图（适合嵌入或分享）
-              </CheckboxLabel>
-              
-              {!directOutput && (
-                <CheckboxLabel>
-                  <input 
-                    type="checkbox" 
-                    checked={autoDownload} 
-                    onChange={handleAutoDownloadChange}
-                    disabled={directOutput}
-                  />
-                  访问链接时自动下载图片
-                </CheckboxLabel>
-              )}
-              
               {showImageUrl && (
                 <InfoText>
                   如需在 Markdown 中直接引用图片，可使用以下图片链接：
