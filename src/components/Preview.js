@@ -105,14 +105,56 @@ const ShareModalHeader = styled.div`
   }
 `;
 
-const ShareInput = styled.input`
+const ShareInput = styled.div`
+  display: flex;
+  align-items: center;
   width: 100%;
-  padding: 10px 12px;
   border: 1px solid #ddd;
   border-radius: 4px;
-  font-size: 14px;
   margin-bottom: 16px;
+  overflow: hidden;
 `;
+
+const LinkIcon = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #f5f5f5;
+  border-right: 1px solid #ddd;
+  padding: 0 12px;
+  height: 38px;
+  cursor: pointer;
+  transition: all 0.2s;
+  
+  &:hover {
+    background-color: #e5e5e5;
+  }
+  
+  svg {
+    width: 18px;
+    height: 18px;
+    color: #555;
+  }
+`;
+
+const InputField = styled.input`
+  flex: 1;
+  padding: 10px 12px;
+  border: none;
+  font-size: 14px;
+  outline: none;
+  width: 100%;
+  background-color: white;
+`;
+
+// SVG图标组件
+const ExternalLinkIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+    <polyline points="15 3 21 3 21 9"></polyline>
+    <line x1="10" y1="14" x2="21" y2="3"></line>
+  </svg>
+);
 
 const ShareButtons = styled.div`
   display: flex;
@@ -265,82 +307,18 @@ const MarkdownContent = styled.div`
   }
 `;
 
-function Preview({ markdown, template, getShareableLink }) {
+function Preview({ markdown, template, getShareableLink, getViewOnlyLink }) {
   const posterRef = useRef(null);
   const [showShareModal, setShowShareModal] = useState(false);
   const [sharableLink, setSharableLink] = useState('');
   const [copied, setCopied] = useState(false);
-  const [showImageUrl, setShowImageUrl] = useState(false);
-
-  const handleDownload = async () => {
-    if (!posterRef.current) return;
-
-    try {
-      console.log('Starting download process...');
-      const canvas = await html2canvas(posterRef.current, {
-        scale: 2,
-        backgroundColor: null,
-        logging: true, // Enable logging for debugging
-        useCORS: true,
-        allowTaint: true, // Allow cross-origin images
-      });
-      
-      console.log('Canvas generated successfully');
-      
-      // Create a blob from the canvas
-      canvas.toBlob((blob) => {
-        if (!blob) {
-          console.error('Failed to create blob');
-          alert('生成图片失败，请稍后再试。');
-          return;
-        }
-        
-        console.log('Blob created successfully');
-        
-        // Create a URL for the blob
-        const url = URL.createObjectURL(blob);
-        
-        // Create download link
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = 'markdown-poster.png';
-        document.body.appendChild(link);
-        
-        // Trigger download
-        link.click();
-        
-        // Clean up
-        setTimeout(() => {
-          document.body.removeChild(link);
-          URL.revokeObjectURL(url);
-          console.log('Download completed and resources cleaned up');
-        }, 100);
-      }, 'image/png', 0.95);
-    } catch (error) {
-      console.error('Error generating poster:', error);
-      alert('生成海报时出错，请稍后再试。');
-    }
-  };
-
-  const handleShare = () => {
-    const link = getShareableLink();
-    setSharableLink(link);
-    setShowShareModal(true);
-  };
-
-  const copyToClipboard = () => {
-    navigator.clipboard.writeText(sharableLink).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    });
-  };
-  
+  const [shareType, setShareType] = useState('normal'); // 'normal', 'viewOnly'
   const [imageUrl, setImageUrl] = useState('');
   const [generatingImage, setGeneratingImage] = useState(false);
   const [progressPercent, setProgressPercent] = useState(0);
   const [progressStatus, setProgressStatus] = useState('');
   
-  // 生成图片URL和下载URL
+  // 生成图片URL
   const generateUrls = async () => {
     if (!posterRef.current || generatingImage) return;
     
@@ -379,12 +357,9 @@ function Preview({ markdown, template, getShareableLink }) {
       const imageId = imageStore.generateId();
       const viewUrl = imageStore.storeImage(imageId, dataUrl);
       
-      // 生成直接下载URL
+      // 生成海报页面URL
       const currentUrl = window.location.origin + window.location.pathname;
       const shareableUrl = getShareableLink();
-      const downloadUrl = `${currentUrl}#/download/?md=${shareableUrl.split('md=')[1]}`;
-      
-      // 生成海报页面URL
       const posterUrl = `${currentUrl}#/p/?md=${shareableUrl.split('md=')[1]}`;
       
       // 步骤5: 完成
@@ -393,7 +368,6 @@ function Preview({ markdown, template, getShareableLink }) {
       
       setImageUrl({ 
         viewUrl: viewUrl, 
-        downloadUrl: downloadUrl,
         posterUrl: posterUrl
       });
       
@@ -411,16 +385,88 @@ function Preview({ markdown, template, getShareableLink }) {
     }
   };
   
-  // 当选择直接输出模式时，生成图片URL
-  useEffect(() => {
-    if (showImageUrl && posterRef.current && !imageUrl) {
-      // 短暂延迟以确保UI更新
-      const timer = setTimeout(() => {
-        generateUrls();
-      }, 100);
-      return () => clearTimeout(timer);
+  // 下载图片
+  const handleDownloadImage = async () => {
+    if (!posterRef.current) return;
+    
+    setGeneratingImage(true);
+    setProgressPercent(0);
+    setProgressStatus('准备下载图片...');
+    
+    try {
+      // 步骤1: 准备渲染
+      setProgressPercent(20);
+      setProgressStatus('准备渲染内容...');
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      // 步骤2: 生成图片
+      setProgressPercent(40);
+      setProgressStatus('生成图片中...');
+      const canvas = await html2canvas(posterRef.current, {
+        scale: 2,
+        backgroundColor: null,
+        logging: false,
+        useCORS: true,
+      });
+      
+      // 步骤3: 转换为数据URL
+      setProgressPercent(80);
+      setProgressStatus('处理图片数据...');
+      const dataUrl = canvas.toDataURL('image/png');
+      
+      // 步骤4: 触发下载
+      setProgressPercent(90);
+      setProgressStatus('准备下载...');
+      
+      // 创建下载链接
+      const link = document.createElement('a');
+      link.href = dataUrl;
+      link.download = 'markdown-poster.png';
+      document.body.appendChild(link);
+      
+      // 触发下载
+      setProgressPercent(100);
+      setProgressStatus('下载中...');
+      link.click();
+      
+      // 清理
+      document.body.removeChild(link);
+      
+      // 完成后重置状态
+      setTimeout(() => {
+        setProgressPercent(0);
+        setProgressStatus('');
+        setGeneratingImage(false);
+      }, 1000);
+      
+    } catch (error) {
+      console.error('Error generating poster:', error);
+      setProgressStatus('生成海报时出错，请稍后再试');
+      setGeneratingImage(false);
+      alert('生成海报时出错，请稍后再试。');
     }
-  }, [showImageUrl, imageUrl]);
+  };
+
+  const handleShare = () => {
+    // 默认使用普通分享链接
+    const link = shareType === 'viewOnly' ? getViewOnlyLink() : getShareableLink();
+    setSharableLink(link);
+    setShowShareModal(true);
+  };
+
+  // 切换分享类型
+  const handleShareTypeChange = (type) => {
+    setShareType(type);
+    const link = type === 'viewOnly' ? getViewOnlyLink() : getShareableLink();
+    setSharableLink(link);
+  };
+
+  const copyToClipboard = () => {
+    navigator.clipboard.writeText(sharableLink).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  };
 
   return (
     <PreviewContainer>
@@ -430,8 +476,8 @@ function Preview({ markdown, template, getShareableLink }) {
           <ControlButton onClick={handleShare}>
             分享链接
           </ControlButton>
-          <ControlButton className="primary" onClick={handleDownload}>
-            下载海报
+          <ControlButton className="primary" onClick={handleDownloadImage}>
+            下载图片
           </ControlButton>
         </PreviewControls>
       </PreviewHeader>
@@ -473,6 +519,54 @@ function Preview({ markdown, template, getShareableLink }) {
           </ReactMarkdown>
         </MarkdownContent>
       </PosterContainer>
+      
+      {/* 显示生成图片的进度和结果 */}
+      {generatingImage && (
+        <div style={{ margin: '20px 16px', padding: '15px', backgroundColor: '#f0f7ff', borderRadius: '8px' }}>
+          <div style={{ fontWeight: '500', marginBottom: '10px' }}>生成图片中...</div>
+          <ProgressContainer>
+            <ProgressBar>
+              <div className="progress-inner" style={{ width: `${progressPercent}%` }} />
+            </ProgressBar>
+            <ProgressText>
+              <span>{progressStatus}</span>
+              <span>{progressPercent}%</span>
+            </ProgressText>
+          </ProgressContainer>
+        </div>
+      )}
+      
+      {imageUrl && !generatingImage && (
+        <div style={{ margin: '20px 16px', padding: '15px', backgroundColor: '#f0f7ff', borderRadius: '8px' }}>
+          <div style={{ fontWeight: '500', marginBottom: '10px' }}>图片已生成！</div>
+          <div style={{ marginBottom: '15px' }}>
+            <div style={{ fontWeight: '500', fontSize: '14px', marginBottom: '5px' }}>在 Markdown 中引用:</div>
+            <CodeSnippet>{`![图片描述](${imageUrl.viewUrl})`}</CodeSnippet>
+          </div>
+          <div>
+            <div style={{ fontWeight: '500', fontSize: '14px', marginBottom: '5px' }}>海报页面链接:</div>
+            <ImageServiceUrl>
+              <a href={imageUrl.posterUrl} target="_blank" rel="noopener noreferrer">
+                {imageUrl.posterUrl}
+              </a>
+            </ImageServiceUrl>
+          </div>
+          <div style={{ marginTop: '15px', textAlign: 'right' }}>
+            <ControlButton 
+              className="primary" 
+              onClick={() => window.open(imageUrl.viewUrl, '_blank')}
+              style={{ marginRight: '8px' }}
+            >
+              查看图片
+            </ControlButton>
+            <ControlButton
+              onClick={() => setImageUrl(null)}
+            >
+              关闭
+            </ControlButton>
+          </div>
+        </div>
+      )}
 
       {showShareModal && (
         <ShareModal onClick={() => setShowShareModal(false)}>
@@ -483,87 +577,41 @@ function Preview({ markdown, template, getShareableLink }) {
             </ShareModalHeader>
             
             <ShareOptions>
-              {showImageUrl && (
-                <InfoText>
-                  如需在 Markdown 中直接引用图片，可使用以下图片链接：
-                  {generatingImage ? (
-                    <div>
-                      <div style={{ textAlign: 'center', padding: '5px 0 10px' }}>
-                        生成图片链接中...
-                      </div>
-                      <ProgressContainer>
-                        <ProgressBar>
-                          <div 
-                            className="progress-inner" 
-                            style={{ width: `${progressPercent}%` }}
-                          />
-                        </ProgressBar>
-                        <ProgressText>
-                          <span>{progressStatus}</span>
-                          <span>{progressPercent}%</span>
-                        </ProgressText>
-                      </ProgressContainer>
-                    </div>
-                  ) : imageUrl ? (
-                    <>
-                      <div style={{ marginTop: '8px', marginBottom: '16px' }}>
-                        <strong>分享方式：</strong>
-                      </div>
-                      
-                      <div style={{ marginBottom: '16px' }}>
-                        <strong>1. 海报页面链接</strong> (类似 ReadPo)：<br />
-                        <ImageServiceUrl>
-                          <a href={imageUrl.posterUrl} target="_blank" rel="noopener noreferrer">
-                            {imageUrl.posterUrl}
-                          </a>
-                        </ImageServiceUrl>
-                        <div style={{ fontSize: '13px', marginTop: '4px', color: '#555' }}>
-                          访问此链接将显示一个简洁的海报页面，类似于 ReadPo
-                        </div>
-                      </div>
-                      
-                      <div style={{ marginBottom: '16px' }}>
-                        <strong>2. Markdown 图片引用：</strong><br />
-                        <ImageServiceUrl>
-                          <a href={imageUrl.viewUrl} target="_blank" rel="noopener noreferrer">
-                            {imageUrl.viewUrl}
-                          </a>
-                        </ImageServiceUrl>
-                        <div style={{ marginTop: '4px' }}>
-                          <CodeSnippet>{`![图片描述](${imageUrl.viewUrl})`}</CodeSnippet>
-                        </div>
-                      </div>
-                      
-                      <div style={{ marginBottom: '16px' }}>
-                        <strong>3. 自动下载链接：</strong><br />
-                        <ImageServiceUrl>
-                          <a href={imageUrl.downloadUrl} target="_blank" rel="noopener noreferrer">
-                            {imageUrl.downloadUrl}
-                          </a>
-                        </ImageServiceUrl>
-                        <div style={{ marginTop: '4px', fontSize: '13px', color: '#555' }}>
-                          适用于命令行工具(wget/curl)和编程语言HTTP客户端(Go/Python)
-                        </div>
-                      </div>
-                      
-                      <div style={{ marginTop: '12px', fontSize: '12px', color: '#666' }}>
-                        注意：此图片链接在当前会话有效，页面刷新后需要重新生成
-                      </div>
-                    </>
-                  ) : (
-                    <div style={{ textAlign: 'center', padding: '10px', color: 'red' }}>
-                      图片生成失败，请重试
-                    </div>
-                  )}
-                </InfoText>
-              )}
+              <div style={{ marginBottom: '15px' }}>
+                <div style={{ marginBottom: '8px', fontWeight: '500' }}>分享类型：</div>
+                <RadioGroup>
+                  <CheckboxLabel>
+                    <input 
+                      type="radio" 
+                      name="shareType"
+                      checked={shareType === 'normal'}
+                      onChange={() => handleShareTypeChange('normal')}
+                    />
+                    普通链接 (显示编辑和下载按钮)
+                  </CheckboxLabel>
+                  <CheckboxLabel>
+                    <input 
+                      type="radio" 
+                      name="shareType"
+                      checked={shareType === 'viewOnly'}
+                      onChange={() => handleShareTypeChange('viewOnly')}
+                    />
+                    只读视图 (不显示编辑和下载按钮)
+                  </CheckboxLabel>
+                </RadioGroup>
+              </div>
             </ShareOptions>
             
-            <ShareInput 
-              value={sharableLink}
-              readOnly
-              onClick={(e) => e.target.select()}
-            />
+            <ShareInput>
+              <LinkIcon onClick={() => window.open(sharableLink, '_blank', 'noopener,noreferrer')} title="在新窗口打开链接">
+                <ExternalLinkIcon />
+              </LinkIcon>
+              <InputField 
+                value={sharableLink}
+                readOnly
+                onClick={(e) => e.target.select()}
+              />
+            </ShareInput>
             <ShareButtons>
               <ControlButton onClick={() => setShowShareModal(false)}>
                 取消

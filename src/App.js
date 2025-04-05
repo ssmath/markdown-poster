@@ -5,10 +5,9 @@ import Editor from './components/Editor';
 import Preview from './components/Preview';
 import TemplateSelector from './components/TemplateSelector';
 import PosterImage from './components/PosterImage';
-import ImageRenderer from './components/ImageRenderer';
 import ImageViewer from './components/ImageViewer';
-import AutoDownloadImage from './components/AutoDownloadImage';
 import PosterPage from './components/PosterPage';
+import ViewOnlyPoster from './components/ViewOnlyPoster';
 import { templates } from './data/templates';
 import styled from 'styled-components';
 import ApiDocs from './components/ApiDocs';
@@ -41,13 +40,11 @@ function App() {
   const [selectedTemplate, setSelectedTemplate] = useState(templates[0]);
   const [showApiDocs, setShowApiDocs] = useState(false);
   const [isImageMode, setIsImageMode] = useState(false);
-  const [isDirectImageMode, setIsDirectImageMode] = useState(false);
-  const [autoDownload, setAutoDownload] = useState(false);
+  const [isViewOnlyMode, setIsViewOnlyMode] = useState(false);
 
   useEffect(() => {
   // 检查是否是特殊路径
   if (window.location.hash.startsWith('#/image/') || 
-      window.location.hash.startsWith('#/download/') ||
       window.location.hash.startsWith('#/p/')) {
     // 不执行其他逻辑，将由特定组件处理
     return;
@@ -58,21 +55,14 @@ function App() {
     const mdContent = queryParams.get('md');
     const templateId = queryParams.get('template');
     const mode = queryParams.get('mode');
-    const download = queryParams.get('download');
-    const output = queryParams.get('output');
     
-    // 检查是否是直接图片输出模式
-    if (output === 'direct' && mdContent) {
-      setIsDirectImageMode(true);
-    }
     // 检查是否是图片模式
-    else if (mode === 'image' && mdContent) {
+    if (mode === 'image' && mdContent) {
       setIsImageMode(true);
     }
-    
-    // 检查是否需要自动下载
-    if (download === 'true') {
-      setAutoDownload(true);
+    // 检查是否是只读视图模式
+    else if (mode === 'view' && mdContent) {
+      setIsViewOnlyMode(true);
     }
     
     if (mdContent) {
@@ -94,17 +84,11 @@ function App() {
   }, []);
 
   // 更新URL，便于分享
-  const updateUrl = (mdContent, templateId, mode = '', download = false, output = '') => {
+  const updateUrl = (mdContent, templateId, mode = '') => {
     const encodedContent = btoa(encodeURIComponent(mdContent));
     let newUrl = `${window.location.pathname}#/?md=${encodedContent}&template=${templateId}`;
     if (mode) {
       newUrl += `&mode=${mode}`;
-    }
-    if (download) {
-      newUrl += `&download=true`;
-    }
-    if (output) {
-      newUrl += `&output=${output}`;
     }
     window.history.replaceState({}, document.title, newUrl);
   };
@@ -122,37 +106,21 @@ function App() {
   // 切换到编辑模式
   const handleEdit = () => {
     setIsImageMode(false);
-    setIsDirectImageMode(false);
+    setIsViewOnlyMode(false);
     updateUrl(markdown, selectedTemplate.id);
   };
 
   // 生成图片模式的分享链接
-  const getImageShareableLink = (withDownload = false, directOutput = false) => {
+  const getImageShareableLink = () => {
     const encodedContent = btoa(encodeURIComponent(markdown));
-    let url = `${window.location.origin}${window.location.pathname}#/?md=${encodedContent}&template=${selectedTemplate.id}`;
-    
-    if (directOutput) {
-      url += `&output=direct`;
-    } else {
-      url += `&mode=image`;
-      if (withDownload) {
-        url += `&download=true`;
-      }
-    }
-    
-    return url;
+    return `${window.location.origin}${window.location.pathname}#/?md=${encodedContent}&template=${selectedTemplate.id}&mode=image`;
   };
-
-  // 如果是直接图片输出模式，使用图片渲染器
-  if (isDirectImageMode) {
-    return (
-      <ImageRenderer 
-        markdown={markdown}
-        templateId={selectedTemplate.id}
-        templates={templates}
-      />
-    );
-  }
+  
+  // 生成只读视图模式的分享链接
+  const getViewOnlyShareableLink = () => {
+    const encodedContent = btoa(encodeURIComponent(markdown));
+    return `${window.location.origin}${window.location.pathname}#/?md=${encodedContent}&template=${selectedTemplate.id}&mode=view`;
+  };
   
   // 如果是图片模式，只渲染海报图片
   if (isImageMode) {
@@ -162,7 +130,6 @@ function App() {
         templateId={selectedTemplate.id} 
         templates={templates}
         onEdit={handleEdit}
-        autoDownload={autoDownload}
       />
     );
   }
@@ -178,20 +145,19 @@ function App() {
     );
   }
   
-  // 检查是否是下载请求路径
-  if (window.location.hash.startsWith('#/download/')) {
-    return (
-      <AutoDownloadImage 
-        markdown={markdown}
-        templateId={selectedTemplate.id}
-        templates={templates}
-      />
-    );
-  }
-  
   // 检查是否是图片查看路径
   if (window.location.hash.startsWith('#/image/')) {
     return <ImageViewer />;
+  }
+  
+  // 检查是否是只读视图模式
+  if (isViewOnlyMode) {
+    return (
+      <ViewOnlyPoster 
+        markdown={markdown}
+        template={selectedTemplate}
+      />
+    );
   }
   
   return (
@@ -211,6 +177,7 @@ function App() {
             markdown={markdown} 
             template={selectedTemplate} 
             getShareableLink={getImageShareableLink}
+            getViewOnlyLink={getViewOnlyShareableLink}
           />
         </ContentWrapper>
         

@@ -59,6 +59,12 @@ const Section = styled.section`
     border-bottom: 1px solid #eaeaea;
   }
   
+  h4 {
+    font-size: 16px;
+    margin-top: 20px;
+    margin-bottom: 10px;
+  }
+  
   p {
     margin-bottom: 15px;
     line-height: 1.6;
@@ -106,6 +112,11 @@ function ApiDocs({ onClose }) {
         </ModalHeader>
         
         <Section>
+          <h3>概述</h3>
+          <p>Markdown Poster 是一个将 Markdown 内容转换为精美海报图片的工具。它提供了多种分享和使用方式，支持多种模板样式，可以满足不同场景的需求。</p>
+        </Section>
+        
+        <Section>
           <h3>URL 参数</h3>
           <p>你可以通过 URL 参数来预设 Markdown 内容和模板，方便分享特定内容的海报。</p>
           
@@ -131,7 +142,9 @@ function ApiDocs({ onClose }) {
               <tr>
                 <td>mode</td>
                 <td>string</td>
-                <td>显示模式，设置为 "image" 时直接显示海报图片而不是编辑界面</td>
+                <td>显示模式：<br/>
+                    - "image": 显示海报图片，带编辑和下载按钮<br/>
+                    - "view": 只读视图，不显示编辑和下载按钮</td>
               </tr>
             </tbody>
           </Table>
@@ -139,81 +152,70 @@ function ApiDocs({ onClose }) {
         
         <Section>
           <h3>使用示例</h3>
-          <p>以下是如何使用 URL 参数的示例：</p>
+          <p>以下是如何使用 URL 参数的各种示例：</p>
           
+          <h4>基本编辑模式</h4>
           <CodeBlock>{`// 基本 URL 结构 (编辑模式)
 https://your-domain.com/#/?md=BASE64_ENCODED_MARKDOWN&template=TEMPLATE_ID
-
-// 图片预览模式
-https://your-domain.com/#/?md=BASE64_ENCODED_MARKDOWN&template=TEMPLATE_ID&mode=image
 
 // 示例：使用 "dark" 模板显示 "# Hello World" 的 Markdown 内容
 // Base64 编码的 "# Hello World" 是 IyBIZWxsbyBXb3JsZA==
 https://your-domain.com/#/?md=IyBIZWxsbyBXb3JsZA==&template=dark`}</CodeBlock>
+
+          <h4>图片预览模式</h4>
+          <CodeBlock>{`// 图片预览模式 (带编辑和下载按钮)
+https://your-domain.com/#/?md=BASE64_ENCODED_MARKDOWN&template=TEMPLATE_ID&mode=image`}</CodeBlock>
+
+          <h4>只读视图模式</h4>
+          <CodeBlock>{`// 只读视图模式 (不显示编辑和下载按钮)
+https://your-domain.com/#/?md=BASE64_ENCODED_MARKDOWN&template=TEMPLATE_ID&mode=view`}</CodeBlock>
+        </Section>
+        
+        <Section>
+          <h3>特殊页面路径</h3>
+          <p>系统提供了多种特殊的页面路径，用于不同的展示和功能需求：</p>
+          
+          <Table>
+            <thead>
+              <tr>
+                <th>路径</th>
+                <th>描述</th>
+                <th>示例</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>#/p/</td>
+                <td>海报页面模式，类似 ReadPo，显示带有编辑和下载按钮的海报</td>
+                <td>https://your-domain.com/#/p/?md=BASE64_ENCODED_MARKDOWN&template=dark</td>
+              </tr>
+            </tbody>
+          </Table>
         </Section>
         
         <Section>
           <h3>分享和引用海报</h3>
           <p>你有多种方式分享和引用生成的海报：</p>
           
-          <h4 style={{ marginTop: '15px', marginBottom: '10px' }}>1. 海报页面 (类似 ReadPo)</h4>
+          <h4>1. 海报页面链接（类似 ReadPo）</h4>
           <CodeBlock>{`// 分享一个简洁的海报页面
 https://your-domain.com/#/p/?md=BASE64_ENCODED_MARKDOWN&template=TEMPLATE_ID
 
 // 示例：
 https://your-domain.com/#/p/?md=IyBIZWxsbyBXb3JsZA==&template=dark`}</CodeBlock>
           
-          <h4 style={{ marginTop: '15px', marginBottom: '10px' }}>2. 在 Markdown 中引用图片</h4>
-          <CodeBlock>{`// 在 Markdown 文件中直接引用生成的海报图片
-![图片描述](https://your-domain.com/#/image/abcd12345)
+          <h4>2. 只读视图链接（无编辑和下载按钮）</h4>
+          <CodeBlock>{`// 分享一个只读视图（适合展示场景）
+https://your-domain.com/#/?md=BASE64_ENCODED_MARKDOWN&template=TEMPLATE_ID&mode=view
 
 // 示例：
-![Markdown Poster](https://your-domain.com/#/image/abcd12345)`}</CodeBlock>
-          
-          <p style={{ marginTop: '15px', fontSize: '14px', color: '#666' }}>
-            注意：所有链接在当前会话有效，页面刷新后需要重新生成。如需长期保存，请下载图片并上传至图床。
-          </p>
+https://your-domain.com/#/?md=IyBIZWxsbyBXb3JsZA==&template=dark&mode=view`}</CodeBlock>
         </Section>
-        
-        <Section>
-          <h3>使用命令行工具下载图片</h3>
-          <p>你可以使用 wget、curl 等命令行工具直接下载生成的图片：</p>
-          
-          <CodeBlock>{`// 使用 wget 下载
-wget "https://your-domain.com/#/download/?md=BASE64_ENCODED_MARKDOWN&template=TEMPLATE_ID" -O markdown-poster.png
-
-// 使用 curl 下载
-curl -o markdown-poster.png "https://your-domain.com/#/download/?md=BASE64_ENCODED_MARKDOWN&template=TEMPLATE_ID"
-
-// 使用 Go HTTP 客户端下载
-// 在 Go 代码中使用 http.Get() 访问上述 URL`}</CodeBlock>
-          
-          <p style={{ marginTop: '15px', fontSize: '14px', color: '#666' }}>
-            访问下载链接时，系统会自动将 Markdown 内容转换为图片并触发下载。
-          </p>
-        </Section>
-        
-        <Section>
-          <h3>生成 URL 参数</h3>
-          <p>在 JavaScript 中生成 URL 参数的代码示例：</p>
-          
-          <CodeBlock>{`// 编码 Markdown 内容为 Base64
-const markdown = "# Hello World";
-const encodedMarkdown = btoa(encodeURIComponent(markdown));
-
-// 生成编辑模式 URL
-const templateId = "dark";
-const editUrl = \`https://your-domain.com/#/?md=\${encodedMarkdown}&template=\${templateId}\`;
-
-// 生成图片模式 URL
-const imageUrl = \`https://your-domain.com/#/?md=\${encodedMarkdown}&template=\${templateId}&mode=image\`;
-
-console.log("编辑链接:", editUrl);
-console.log("图片链接:", imageUrl);`}</CodeBlock>
-        </Section>
-        
+                
         <Section>
           <h3>支持的模板 ID</h3>
+          <p>系统内置了多种精美模板，可以通过模板 ID 在 URL 中指定：</p>
+          
           <Table>
             <thead>
               <tr>
@@ -265,6 +267,28 @@ console.log("图片链接:", imageUrl);`}</CodeBlock>
               </tr>
             </tbody>
           </Table>
+        </Section>
+
+        <Section>
+          <h3>技术实现说明</h3>
+          <p>Markdown Poster 使用以下关键技术实现：</p>
+          <ul style={{ marginLeft: '20px', lineHeight: '1.6' }}>
+            <li>基于 React 和 styled-components 构建用户界面</li>
+            <li>使用 react-markdown 解析和渲染 Markdown 内容</li>
+            <li>使用 html2canvas 将 DOM 元素转换为图片</li>
+            <li>使用 sessionStorage 存储生成的图片数据，实现跨页面访问</li>
+            <li>通过 URL hash 路由实现不同的应用模式</li>
+          </ul>
+        </Section>
+        
+        <Section>
+          <h3>兼容性与限制</h3>
+          <p>使用 Markdown Poster 时，请注意以下限制：</p>
+          <ul style={{ marginLeft: '20px', lineHeight: '1.6' }}>
+            <li>图片链接在当前会话有效，页面刷新后需要重新生成</li>
+            <li>较大的 Markdown 内容可能导致 URL 过长，超出浏览器限制</li>
+            <li>包含远程图片的 Markdown 可能受到跨域限制</li>
+          </ul>
         </Section>
       </ModalContent>
     </ModalOverlay>

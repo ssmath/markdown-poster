@@ -133,7 +133,7 @@ const Loading = styled.div`
   }
 `;
 
-function PosterImage({ markdown, templateId, templates, onEdit, autoDownload = false }) {
+function PosterImage({ markdown, templateId, templates, onEdit }) {
   const [template, setTemplate] = useState(null);
   const [loading, setLoading] = useState(true);
   const posterRef = useRef(null);
@@ -175,17 +175,7 @@ function PosterImage({ markdown, templateId, templates, onEdit, autoDownload = f
     const foundTemplate = templates.find(t => t.id === templateId) || templates[0];
     setTemplate(foundTemplate);
     setLoading(false);
-
-    // 如果设置了自动下载，等待渲染完成后自动触发下载
-    if (autoDownload) {
-      // 使用短暂延迟确保DOM已完全渲染
-      const timer = setTimeout(() => {
-        generateAndDownload();
-      }, 1000); // 给一点时间让内容渲染
-      
-      return () => clearTimeout(timer);
-    }
-  }, [templateId, templates, autoDownload]);
+  }, [templateId, templates]);
 
   if (loading || !template) {
     return (

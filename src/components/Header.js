@@ -71,8 +71,7 @@ function Header({ onShowApiDocs }) {
         <Nav>
           <ul>
             <li><a onClick={onShowApiDocs}>API 文档</a></li>
-            <li><a href="#">关于</a></li>
-            <li><a href="https://github.com" target="_blank" rel="noopener noreferrer">GitHub</a></li>
+            <li><a href="https://github.com/yeshan333/markdown-poster" target="_blank" rel="noopener noreferrer">GitHub</a></li>
           </ul>
         </Nav>
       </HeaderContent>

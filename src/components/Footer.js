@@ -65,9 +65,7 @@ function Footer() {
         </Copyright>
         <FooterNav>
           <ul>
-            <li><a href="#">隐私政策</a></li>
-            <li><a href="#">使用条款</a></li>
-            <li><a href="#">联系我们</a></li>
+            <li><a href="mailto:yeshan333.ye@gmail.com">联系我们</a></li>
           </ul>
         </FooterNav>
       </FooterContent>
