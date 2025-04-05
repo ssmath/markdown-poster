@@ -41,14 +41,15 @@ function App() {
   const [showApiDocs, setShowApiDocs] = useState(false);
   const [isImageMode, setIsImageMode] = useState(false);
   const [isViewOnlyMode, setIsViewOnlyMode] = useState(false);
+  const [encodedMarkdown, setEncodedMarkdown] = useState('');
 
   useEffect(() => {
-  // 检查是否是特殊路径
-  if (window.location.hash.startsWith('#/image/') || 
-      window.location.hash.startsWith('#/p/')) {
-    // 不执行其他逻辑，将由特定组件处理
-    return;
-  }
+    // 检查是否是特殊路径
+    if (window.location.hash.startsWith('#/image/') || 
+        window.location.hash.startsWith('#/p/')) {
+      // 不执行其他逻辑，将由特定组件处理
+      return;
+    }
     
     // 从URL参数获取markdown内容和模式
     const queryParams = new URLSearchParams(window.location.hash.split('?')[1] || '');
@@ -70,6 +71,7 @@ function App() {
         // 解码Base64编码的内容
         const decodedContent = decodeURIComponent(atob(mdContent));
         setMarkdown(decodedContent);
+        setEncodedMarkdown(mdContent);
       } catch (e) {
         console.error('解析URL参数失败:', e);
       }
@@ -83,14 +85,28 @@ function App() {
     }
   }, []);
 
+  useEffect(() => {
+    try {
+      const encodedContent = btoa(encodeURIComponent(markdown));
+      setEncodedMarkdown(encodedContent);
+    } catch (e) {
+      console.error('编码内容失败:', e);
+    }
+  }, [markdown]);
+
   // 更新URL，便于分享
   const updateUrl = (mdContent, templateId, mode = '') => {
-    const encodedContent = btoa(encodeURIComponent(mdContent));
-    let newUrl = `${window.location.pathname}#/?md=${encodedContent}&template=${templateId}`;
-    if (mode) {
-      newUrl += `&mode=${mode}`;
+    try {
+      const encodedContent = btoa(encodeURIComponent(mdContent));
+      setEncodedMarkdown(encodedContent);
+      let newUrl = `${window.location.pathname}#/?md=${encodedContent}&template=${templateId}`;
+      if (mode) {
+        newUrl += `&mode=${mode}`;
+      }
+      window.history.replaceState({}, document.title, newUrl);
+    } catch (e) {
+      console.error('更新URL失败:', e);
     }
-    window.history.replaceState({}, document.title, newUrl);
   };
 
   const handleMarkdownChange = (newMarkdown) => {
@@ -112,14 +128,12 @@ function App() {
 
   // 生成图片模式的分享链接
   const getImageShareableLink = () => {
-    const encodedContent = btoa(encodeURIComponent(markdown));
-    return `${window.location.origin}${window.location.pathname}#/?md=${encodedContent}&template=${selectedTemplate.id}&mode=image`;
+    return `${window.location.origin}${window.location.pathname}#/?md=${encodedMarkdown}&template=${selectedTemplate.id}&mode=image`;
   };
   
   // 生成只读视图模式的分享链接
   const getViewOnlyShareableLink = () => {
-    const encodedContent = btoa(encodeURIComponent(markdown));
-    return `${window.location.origin}${window.location.pathname}#/?md=${encodedContent}&template=${selectedTemplate.id}&mode=view`;
+    return `${window.location.origin}${window.location.pathname}#/?md=${encodedMarkdown}&template=${selectedTemplate.id}&mode=view`;
   };
   
   // 如果是图片模式，只渲染海报图片

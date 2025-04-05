@@ -18,7 +18,7 @@ const StyledPosterContainer = styled.div`
   overflow: hidden;
 `;
 
-function PosterContainer({ children, template, forwardedRef, ...props }) {
+function PosterContainer({ children, template = {}, forwardedRef, ...props }) {
   return (
     <StyledPosterContainer
       ref={forwardedRef}
