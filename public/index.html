@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Markdown 海报生成器</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    /* 确保body和html没有默认边距 */
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      width: 100%;
+    }
+    #root {
+      min-height: 100%;
+    }
+    /* 直接图片输出模式的样式 */
+    body.direct-image-mode {
+      background-color: transparent !important;
+      overflow: hidden !important;
+    }
+    body.direct-image-mode #root {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    body.direct-image-mode img {
+      max-width: 100%;
+      max-height: 100vh;
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+</body>
+</html>
